@@ -2,23 +2,31 @@ import { useState } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Music2, Loader2 } from 'lucide-react'
+import { Music2, Loader2, Chrome } from 'lucide-react'
+import { sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 
 export default function AuthPage() {
     const { signIn, signUp } = useAuth()
     const [isSignUp, setIsSignUp] = useState(false)
+    const [isReset, setIsReset] = useState(false)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [message, setMessage] = useState('')
     const [loading, setLoading] = useState(false)
 
     const handleSubmit = async (e) => {
         e.preventDefault()
         setError('')
+        setMessage('')
         setLoading(true)
 
         try {
-            if (isSignUp) {
+            if (isReset) {
+                await sendPasswordResetEmail(auth, email)
+                setMessage('Password reset email sent. Check your inbox.')
+            } else if (isSignUp) {
                 await signUp(email, password)
             } else {
                 await signIn(email, password)
@@ -32,7 +40,20 @@ export default function AuthPage() {
                 'auth/user-not-found': 'No account found with this email',
                 'auth/wrong-password': 'Incorrect password',
             }
-            setError(messages[err.code] || 'Something went wrong. Please try again.')
+            setError(messages[err.code] || err.message || 'Something went wrong. Please try again.')
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    const handleGoogleSignIn = async () => {
+        setError('')
+        setLoading(true)
+        try {
+            const provider = new GoogleAuthProvider()
+            await signInWithPopup(auth, provider)
+        } catch (err) {
+            setError(err.message)
         } finally {
             setLoading(false)
         }
@@ -66,38 +87,90 @@ export default function AuthPage() {
                             autoComplete="email"
                             className="h-11"
                         />
-                        <Input
-                            type="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                            autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                            minLength={6}
-                            className="h-11"
-                        />
+                        {!isReset && (
+                            <div className="relative">
+                                <Input
+                                    type="password"
+                                    placeholder="Password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    autoComplete={isSignUp ? 'new-password' : 'current-password'}
+                                    minLength={6}
+                                    className="h-11"
+                                />
+                                {!isSignUp && (
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsReset(true); setError(''); setMessage('') }}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground hover:text-primary"
+                                    >
+                                        Forgot?
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {error && (
                         <p className="text-sm text-destructive text-center">{error}</p>
                     )}
+                    {message && (
+                        <p className="text-sm text-green-500 text-center">{message}</p>
+                    )}
 
                     <Button type="submit" className="w-full h-11" disabled={loading}>
                         {loading && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                        {isSignUp ? 'Create account' : 'Sign in'}
+                        {isReset ? 'Send Reset Link' : (isSignUp ? 'Create account' : 'Sign in')}
                     </Button>
                 </form>
 
+                {!isReset && (
+                    <>
+                        <div className="relative my-6">
+                            <div className="absolute inset-0 flex items-center">
+                                <span className="w-full border-t border-border" />
+                            </div>
+                            <div className="relative flex justify-center text-xs uppercase">
+                                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                            </div>
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            type="button"
+                            className="w-full h-11"
+                            onClick={handleGoogleSignIn}
+                            disabled={loading}
+                        >
+                            <Chrome className="h-4 w-4 mr-2" />
+                            Google
+                        </Button>
+                    </>
+                )}
+
                 {/* Toggle */}
                 <p className="text-center text-sm text-muted-foreground mt-6">
-                    {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-                    <button
-                        type="button"
-                        onClick={() => { setIsSignUp(!isSignUp); setError('') }}
-                        className="text-primary hover:underline font-medium cursor-pointer"
-                    >
-                        {isSignUp ? 'Sign in' : 'Create one'}
-                    </button>
+                    {isReset ? (
+                        <button
+                            type="button"
+                            onClick={() => { setIsReset(false); setError(''); setMessage('') }}
+                            className="text-primary hover:underline font-medium cursor-pointer"
+                        >
+                            Back to Sign In
+                        </button>
+                    ) : (
+                        <>
+                            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                            <button
+                                type="button"
+                                onClick={() => { setIsSignUp(!isSignUp); setError(''); setIsReset(false) }}
+                                className="text-primary hover:underline font-medium cursor-pointer"
+                            >
+                                {isSignUp ? 'Sign in' : 'Create one'}
+                            </button>
+                        </>
+                    )}
                 </p>
             </div>
         </div>

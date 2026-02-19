@@ -23,20 +23,28 @@ export function RightPanel({ className }) {
 
     // Parse content and extract chords
     const lines = useMemo(() => {
-        if (!activeSong?.content) return []
-        try {
-            return JSON.parse(activeSong.content)
-        } catch {
-            return []
-        }
+        return parseContent(activeSong?.content)
     }, [activeSong?.content])
 
-    const chords = useMemo(() => extractChords(lines), [lines])
+    const { allChords, keyChords, detectedKey, scaleNotes } = useMemo(() => {
+        const extractedChords = extractChords(lines)
+        const key = detectKey(extractedChords)
+        if (!key) return { allChords: extractedChords, keyChords: [], detectedKey: null, scaleNotes: [] }
 
-    // Detect key
-    const detectedKey = useMemo(() => detectKey(chords), [chords])
-    const keyChords = useMemo(() => getChordsInKey(detectedKey), [detectedKey])
-    const scaleNotes = useMemo(() => getScaleNotes(detectedKey), [detectedKey])
+        return {
+            allChords: extractedChords,
+            keyChords: getChordsInKey(key),
+            detectedKey: key,
+            scaleNotes: getScaleNotes(key)
+        }
+    }, [lines])
+
+    // Sync detected key to database
+    useEffect(() => {
+        if (activeSong && detectedKey && activeSong.key !== detectedKey) {
+            updateSong(activeSong.id, { key: detectedKey })
+        }
+    }, [detectedKey, activeSong, updateSong])
 
     // Handle chord click
     const handleChordClick = useCallback((chord) => {
@@ -64,7 +72,7 @@ export function RightPanel({ className }) {
     return (
         <aside
             className={cn(
-                'w-72 border-l border-border bg-card flex flex-col h-full overflow-y-auto',
+                'w-96 border-l border-border bg-card flex flex-col h-full overflow-y-auto',
                 className
             )}
         >
