@@ -18,28 +18,26 @@ export function EditorArea({ className }) {
                 </p>
 
                 {/* Editor Content Placeholder */}
-                <div className="space-y-8">
+                <div className="space-y-10">
                     {/* Verse placeholder */}
-                    <div className="space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider opacity-40">
+                    <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider opacity-40 mb-4">
                             Verse 1
                         </p>
-                        <div className="space-y-5">
-                            <div className="relative">
-                                <span className="absolute -top-4 left-0 font-mono text-xs text-chord opacity-40">
+                        <div className="space-y-1">
+                            <div className="pt-5">
+                                <p className="font-mono text-xs text-chord opacity-40 mb-1">
                                     Am
-                                </span>
+                                </p>
                                 <p className="text-foreground/30 leading-relaxed">
                                     Start writing your lyrics here...
                                 </p>
                             </div>
-                            <div className="relative">
-                                <span className="absolute -top-4 left-0 font-mono text-xs text-chord opacity-40">
-                                    F
-                                </span>
-                                <span className="absolute -top-4 left-32 font-mono text-xs text-chord opacity-40">
-                                    G
-                                </span>
+                            <div className="pt-5">
+                                <div className="flex gap-24 font-mono text-xs text-chord opacity-40 mb-1">
+                                    <span>F</span>
+                                    <span>G</span>
+                                </div>
                                 <p className="text-foreground/30 leading-relaxed">
                                     Add chords above your lyrics with a click
                                 </p>
@@ -48,17 +46,15 @@ export function EditorArea({ className }) {
                     </div>
 
                     {/* Chorus placeholder */}
-                    <div className="space-y-1">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider opacity-40">
+                    <div>
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider opacity-40 mb-4">
                             Chorus
                         </p>
-                        <div className="relative">
-                            <span className="absolute -top-4 left-0 font-mono text-xs text-chord opacity-40">
-                                C
-                            </span>
-                            <span className="absolute -top-4 left-48 font-mono text-xs text-chord opacity-40">
-                                G
-                            </span>
+                        <div className="pt-5">
+                            <div className="flex gap-40 font-mono text-xs text-chord opacity-40 mb-1">
+                                <span>C</span>
+                                <span>G</span>
+                            </div>
                             <p className="text-foreground/30 leading-relaxed">
                                 Your chorus goes here...
                             </p>
@@ -67,7 +63,7 @@ export function EditorArea({ className }) {
                 </div>
 
                 {/* Cursor blink placeholder */}
-                <div className="mt-12 flex items-center gap-1 opacity-20">
+                <div className="mt-16 flex items-center gap-1.5 opacity-20">
                     <div className="w-0.5 h-5 bg-foreground animate-pulse" />
                     <span className="text-xs text-muted-foreground">Ready to write</span>
                 </div>

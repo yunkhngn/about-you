@@ -90,21 +90,16 @@ export function RightPanel({ className }) {
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
                                     Piano
                                 </p>
-                                <div className="relative h-24 bg-muted rounded-lg flex items-center justify-center">
+                                <div className="relative h-28 bg-muted rounded-lg flex flex-col items-center justify-center overflow-hidden">
                                     <div className="flex gap-0.5">
-                                        {Array.from({ length: 14 }).map((_, i) => (
+                                        {Array.from({ length: 7 }).map((_, i) => (
                                             <div
                                                 key={i}
-                                                className={cn(
-                                                    'rounded-b-sm transition-colors',
-                                                    i % 7 === 0 || i % 7 === 3 || i % 7 === 5
-                                                        ? 'w-5 h-16 bg-background border border-border'
-                                                        : 'w-5 h-16 bg-background border border-border'
-                                                )}
+                                                className="w-7 h-16 bg-background border border-border rounded-b-sm transition-colors"
                                             />
                                         ))}
                                     </div>
-                                    <p className="absolute bottom-2 text-[10px] text-muted-foreground">
+                                    <p className="mt-2 text-[10px] text-muted-foreground">
                                         Select a chord to visualize
                                     </p>
                                 </div>
@@ -115,8 +110,8 @@ export function RightPanel({ className }) {
                                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
                                     Guitar
                                 </p>
-                                <div className="h-32 bg-muted rounded-lg flex items-center justify-center">
-                                    <div className="space-y-2">
+                                <div className="h-36 bg-muted rounded-lg flex flex-col items-center justify-center overflow-hidden">
+                                    <div className="space-y-3">
                                         {Array.from({ length: 6 }).map((_, i) => (
                                             <div
                                                 key={i}
@@ -124,7 +119,7 @@ export function RightPanel({ className }) {
                                             />
                                         ))}
                                     </div>
-                                    <p className="absolute text-[10px] text-muted-foreground">
+                                    <p className="mt-3 text-[10px] text-muted-foreground">
                                         Select a chord to visualize
                                     </p>
                                 </div>
