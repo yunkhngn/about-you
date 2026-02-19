@@ -6,6 +6,7 @@ import { SongEditor } from '@/components/editor/SongEditor'
 import { RightPanel } from '@/components/layout/RightPanel'
 import { TopBar } from '@/components/layout/TopBar'
 import AuthPage from '@/pages/AuthPage'
+import SharedSongPage from '@/pages/SharedSongPage'
 import { Loader2 } from 'lucide-react'
 
 function ProtectedRoute({ children }) {
@@ -65,6 +66,7 @@ export default function App() {
             </PublicRoute>
           }
         />
+        <Route path="/s/:shareId" element={<SharedSongPage />} />
         <Route
           path="/*"
           element={

@@ -1,8 +1,10 @@
-import { Save, Download, Share2, Moon, Sun, LogOut, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { Save, Download, Share2, Moon, Sun, LogOut, Loader2, Copy, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/components/AuthProvider'
 import { useSongs } from '@/components/SongsProvider'
+import { exportSongPDF } from '@/lib/export/pdf'
 import { cn } from '@/lib/utils'
 
 const STATUS_MAP = {
@@ -14,10 +16,33 @@ const STATUS_MAP = {
 export function TopBar({ className }) {
     const { theme, toggleTheme } = useTheme()
     const { user, signOut } = useAuth()
-    const { saveStatus } = useSongs()
+    const { activeSong, saveStatus } = useSongs()
+    const [exporting, setExporting] = useState(false)
+    const [copied, setCopied] = useState(false)
 
     const status = STATUS_MAP[saveStatus] || STATUS_MAP.saved
     const StatusIcon = status.icon
+
+    const handleExport = async () => {
+        if (!activeSong || exporting) return
+        setExporting(true)
+        try {
+            await exportSongPDF(activeSong)
+        } catch (err) {
+            console.error('Export failed:', err)
+        } finally {
+            setExporting(false)
+        }
+    }
+
+    const handleShare = () => {
+        if (!activeSong?.shareId) return
+        const url = `${window.location.origin}/s/${activeSong.shareId}`
+        navigator.clipboard.writeText(url).then(() => {
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+        })
+    }
 
     return (
         <header
@@ -40,19 +65,27 @@ export function TopBar({ className }) {
                     {user?.email}
                 </span>
                 <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8">
-                    {theme === 'dark' ? (
-                        <Sun className="h-4 w-4" />
-                    ) : (
-                        <Moon className="h-4 w-4" />
-                    )}
+                    {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
-                <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8">
-                    <Download className="h-3.5 w-3.5" />
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-xs h-8"
+                    onClick={handleExport}
+                    disabled={!activeSong || exporting}
+                >
+                    {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                     Export
                 </Button>
-                <Button variant="ghost" size="sm" className="gap-1.5 text-xs h-8">
-                    <Share2 className="h-3.5 w-3.5" />
-                    Share
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-1.5 text-xs h-8"
+                    onClick={handleShare}
+                    disabled={!activeSong}
+                >
+                    {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Share2 className="h-3.5 w-3.5" />}
+                    {copied ? 'Copied!' : 'Share'}
                 </Button>
                 <div className="w-px h-5 bg-border mx-1" />
                 <Button
