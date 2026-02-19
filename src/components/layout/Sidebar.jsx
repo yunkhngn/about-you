@@ -14,14 +14,20 @@ export function Sidebar({ className }) {
     )
 
     const formatTime = (timestamp) => {
-        if (!timestamp) return ''
-        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
-        const now = new Date()
-        const diff = now - date
-        if (diff < 60000) return 'Just now'
-        if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
-        if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
-        return date.toLocaleDateString()
+        if (!timestamp) return 'Just now'
+        try {
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+            if (isNaN(date.getTime())) return 'Just now'
+            const now = new Date()
+            const diff = now - date
+            if (diff < 60000) return 'Just now'
+            if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
+            return date.toLocaleDateString()
+        } catch (error) {
+            // Handle cases where timestamp might be invalid or not fully resolved yet
+            return 'Just now'
+        }
     }
 
     return (
