@@ -15,6 +15,7 @@ function ChordPopover({ position, onInsert, onClose }) {
 
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' && chord.trim()) {
+            e.preventDefault()
             onInsert(chord.trim())
         } else if (e.key === 'Escape') {
             onClose()
@@ -40,9 +41,50 @@ function ChordPopover({ position, onInsert, onClose }) {
 }
 
 /**
+ * An uncontrolled contentEditable line — React never re-renders its text content.
+ * We only read from it via onInput, and set it imperatively on mount / song switch.
+ */
+function EditableLine({ initialText, onTextChange, onDoubleClick, onKeyDown }) {
+    const ref = useRef(null)
+    const mountedText = useRef(initialText)
+
+    // Set text only when the initial text identity changes (song switch)
+    useEffect(() => {
+        if (ref.current && initialText !== mountedText.current) {
+            ref.current.textContent = initialText || ''
+            mountedText.current = initialText
+        }
+    }, [initialText])
+
+    // Set text on first mount
+    useEffect(() => {
+        if (ref.current) {
+            ref.current.textContent = initialText || ''
+        }
+    }, [])
+
+    return (
+        <div
+            ref={ref}
+            contentEditable
+            suppressContentEditableWarning
+            onInput={() => {
+                const text = ref.current?.textContent || ''
+                mountedText.current = text
+                onTextChange(text)
+            }}
+            onDoubleClick={onDoubleClick}
+            onKeyDown={onKeyDown}
+            className="min-h-[1.75rem] text-foreground leading-relaxed outline-none whitespace-pre-wrap"
+            style={{ caretColor: 'var(--primary)' }}
+        />
+    )
+}
+
+/**
  * Renders a single line with chords above
  */
-function EditorLine({ line, chords = [], onLyricChange, onAddChord, onRemoveChord, lineIndex }) {
+function EditorLine({ line, chords = [], onLyricChange, onAddChord, onRemoveChord, lineIndex, onKeyDown }) {
     const lineRef = useRef(null)
     const [popover, setPopover] = useState(null)
 
@@ -76,18 +118,13 @@ function EditorLine({ line, chords = [], onLyricChange, onAddChord, onRemoveChor
                 ))}
             </div>
 
-            {/* Lyric line */}
-            <div
-                contentEditable
-                suppressContentEditableWarning
-                onInput={(e) => onLyricChange(lineIndex, e.currentTarget.textContent)}
+            {/* Lyric line — uncontrolled */}
+            <EditableLine
+                initialText={line}
+                onTextChange={(text) => onLyricChange(lineIndex, text)}
                 onDoubleClick={handleDoubleClick}
-                className="min-h-[1.75rem] text-foreground leading-relaxed outline-none whitespace-pre-wrap"
-                data-placeholder="Type lyrics here... (double-click to add chord)"
-                style={{ caretColor: 'var(--primary)' }}
-            >
-                {line}
-            </div>
+                onKeyDown={onKeyDown}
+            />
 
             {/* Chord insertion popover */}
             {popover && (
@@ -108,7 +145,6 @@ function EditorLine({ line, chords = [], onLyricChange, onAddChord, onRemoveChor
 
 /**
  * Parse song content to structured lines
- * Format: Each line is { lyrics: string, chords: [{ position: number, name: string }] }
  */
 function parseContent(content) {
     if (!content) return [{ lyrics: '', chords: [] }]
@@ -116,7 +152,6 @@ function parseContent(content) {
         const parsed = JSON.parse(content)
         if (Array.isArray(parsed) && parsed.length > 0) return parsed
     } catch {
-        // If not JSON, treat as plain text
         return content.split('\n').map((line) => ({ lyrics: line, chords: [] }))
     }
     return [{ lyrics: '', chords: [] }]
@@ -130,14 +165,16 @@ export function SongEditor({ className }) {
     const { activeSong, updateSong } = useSongs()
     const [lines, setLines] = useState([{ lyrics: '', chords: [] }])
     const [title, setTitle] = useState('')
-    const titleRef = useRef(null)
+    const prevSongId = useRef(null)
 
     // Load song content when active song changes
     useEffect(() => {
-        if (activeSong) {
+        if (activeSong && activeSong.id !== prevSongId.current) {
+            prevSongId.current = activeSong.id
             setTitle(activeSong.title || 'Untitled Song')
             setLines(parseContent(activeSong.content))
-        } else {
+        } else if (!activeSong) {
+            prevSongId.current = null
             setTitle('')
             setLines([{ lyrics: '', chords: [] }])
         }
@@ -154,14 +191,6 @@ export function SongEditor({ className }) {
         setLines((prev) => {
             const updated = [...prev]
             updated[lineIndex] = { ...updated[lineIndex], lyrics: text }
-
-            // Add new empty line if editing last line
-            if (lineIndex === updated.length - 1 && text.length > 0) {
-                // Check if there's already an empty line at the end
-                if (updated[updated.length - 1].lyrics.length > 0) {
-                    updated.push({ lyrics: '', chords: [] })
-                }
-            }
 
             if (activeSong) {
                 updateSong(activeSong.id, { content: serializeContent(updated) })
@@ -203,8 +232,7 @@ export function SongEditor({ className }) {
         if (e.key === 'Enter') {
             e.preventDefault()
             setLines((prev) => {
-                const updated = [...prev]
-                updated.push({ lyrics: '', chords: [] })
+                const updated = [...prev, { lyrics: '', chords: [] }]
                 if (activeSong) {
                     updateSong(activeSong.id, { content: serializeContent(updated) })
                 }
@@ -240,7 +268,6 @@ export function SongEditor({ className }) {
             <div className="w-full max-w-2xl px-10 py-16">
                 {/* Song Title */}
                 <input
-                    ref={titleRef}
                     value={title}
                     onChange={(e) => handleTitleChange(e.target.value)}
                     className="w-full font-display text-3xl font-semibold text-foreground bg-transparent border-none outline-none placeholder:text-foreground/30 mb-1"
@@ -254,16 +281,17 @@ export function SongEditor({ className }) {
                 </p>
 
                 {/* Editor Lines */}
-                <div className="space-y-1" onKeyDown={handleKeyDown}>
+                <div className="space-y-1">
                     {lines.map((line, i) => (
                         <EditorLine
-                            key={i}
+                            key={`${activeSong.id}-${i}`}
                             line={line.lyrics}
                             chords={line.chords}
                             lineIndex={i}
                             onLyricChange={handleLyricChange}
                             onAddChord={handleAddChord}
                             onRemoveChord={handleRemoveChord}
+                            onKeyDown={handleKeyDown}
                         />
                     ))}
                 </div>
@@ -272,7 +300,7 @@ export function SongEditor({ className }) {
                 <div className="mt-16 flex items-center gap-1.5 opacity-30">
                     <div className="w-0.5 h-5 bg-foreground animate-pulse" />
                     <span className="text-xs text-muted-foreground">
-                        Double-click on a line to add a chord
+                        Double-click on a line to add a chord · Enter for new line
                     </span>
                 </div>
             </div>
