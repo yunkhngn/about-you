@@ -1,12 +1,23 @@
-import { Save, Download, Share2, Moon, Sun, LogOut } from 'lucide-react'
+import { Save, Download, Share2, Moon, Sun, LogOut, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/components/AuthProvider'
+import { useSongs } from '@/components/SongsProvider'
 import { cn } from '@/lib/utils'
+
+const STATUS_MAP = {
+    saved: { icon: Save, text: 'Saved', className: 'text-muted-foreground' },
+    saving: { icon: Loader2, text: 'Saving...', className: 'text-muted-foreground animate-pulse' },
+    unsaved: { icon: Save, text: 'Unsaved', className: 'text-yellow-500' },
+}
 
 export function TopBar({ className }) {
     const { theme, toggleTheme } = useTheme()
     const { user, signOut } = useAuth()
+    const { saveStatus } = useSongs()
+
+    const status = STATUS_MAP[saveStatus] || STATUS_MAP.saved
+    const StatusIcon = status.icon
 
     return (
         <header
@@ -17,9 +28,9 @@ export function TopBar({ className }) {
         >
             {/* Left: Save status */}
             <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <Save className="h-3.5 w-3.5" />
-                    <span className="text-xs">Saved</span>
+                <div className={cn('flex items-center gap-1.5', status.className)}>
+                    <StatusIcon className={cn('h-3.5 w-3.5', saveStatus === 'saving' && 'animate-spin')} />
+                    <span className="text-xs">{status.text}</span>
                 </div>
             </div>
 

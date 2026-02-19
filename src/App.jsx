@@ -1,7 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from '@/components/AuthProvider'
+import { SongsProvider } from '@/components/SongsProvider'
 import { Sidebar } from '@/components/layout/Sidebar'
-import { EditorArea } from '@/components/layout/EditorArea'
+import { SongEditor } from '@/components/editor/SongEditor'
 import { RightPanel } from '@/components/layout/RightPanel'
 import { TopBar } from '@/components/layout/TopBar'
 import AuthPage from '@/pages/AuthPage'
@@ -39,14 +40,16 @@ function PublicRoute({ children }) {
 
 function Workspace() {
   return (
-    <div className="h-screen flex flex-col overflow-hidden">
-      <TopBar />
-      <div className="flex-1 flex overflow-hidden">
-        <Sidebar />
-        <EditorArea />
-        <RightPanel />
+    <SongsProvider>
+      <div className="h-screen flex flex-col overflow-hidden">
+        <TopBar />
+        <div className="flex-1 flex overflow-hidden">
+          <Sidebar />
+          <SongEditor />
+          <RightPanel />
+        </div>
       </div>
-    </div>
+    </SongsProvider>
   )
 }
 

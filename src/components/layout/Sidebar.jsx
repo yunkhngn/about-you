@@ -1,18 +1,28 @@
 import { useState } from 'react'
-import { Search, Plus, Music2, FileText } from 'lucide-react'
+import { Search, Plus, Music2, FileText, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { useSongs } from '@/components/SongsProvider'
 import { cn } from '@/lib/utils'
 
-const PLACEHOLDER_SONGS = [
-    { id: '1', title: 'Untitled Song', updatedAt: 'Just now' },
-    { id: '2', title: 'Midnight Blues', updatedAt: '2 hours ago' },
-    { id: '3', title: 'Autumn Leaves', updatedAt: 'Yesterday' },
-]
-
 export function Sidebar({ className }) {
+    const { songs, activeSongId, setActiveSongId, createSong, deleteSong, loading } = useSongs()
     const [search, setSearch] = useState('')
-    const [selectedId, setSelectedId] = useState('1')
+
+    const filteredSongs = songs.filter((song) =>
+        song.title.toLowerCase().includes(search.toLowerCase())
+    )
+
+    const formatTime = (timestamp) => {
+        if (!timestamp) return ''
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+        const now = new Date()
+        const diff = now - date
+        if (diff < 60000) return 'Just now'
+        if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
+        if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
+        return date.toLocaleDateString()
+    }
 
     return (
         <aside
@@ -36,7 +46,11 @@ export function Sidebar({ className }) {
 
             {/* New Song + Search */}
             <div className="p-4 space-y-3">
-                <Button className="w-full justify-start gap-2" size="sm">
+                <Button
+                    className="w-full justify-start gap-2"
+                    size="sm"
+                    onClick={createSong}
+                >
                     <Plus className="h-4 w-4" />
                     New Song
                 </Button>
@@ -53,27 +67,46 @@ export function Sidebar({ className }) {
 
             {/* Song List */}
             <nav className="flex-1 overflow-y-auto px-3 pb-4">
-                <p className="px-2.5 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-                    Recent
-                </p>
-                {PLACEHOLDER_SONGS.map((song) => (
-                    <button
-                        key={song.id}
-                        onClick={() => setSelectedId(song.id)}
-                        className={cn(
-                            'w-full flex items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors cursor-pointer',
-                            selectedId === song.id
-                                ? 'bg-accent text-accent-foreground'
-                                : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                        )}
-                    >
-                        <FileText className="h-4 w-4 mt-0.5 shrink-0 opacity-60" />
-                        <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">{song.title}</p>
-                            <p className="text-[10px] text-muted-foreground">{song.updatedAt}</p>
-                        </div>
-                    </button>
-                ))}
+                {loading ? (
+                    <p className="px-2.5 py-4 text-xs text-muted-foreground text-center">Loading songs...</p>
+                ) : filteredSongs.length === 0 ? (
+                    <p className="px-2.5 py-4 text-xs text-muted-foreground text-center">
+                        {search ? 'No songs found' : 'No songs yet'}
+                    </p>
+                ) : (
+                    <>
+                        <p className="px-2.5 py-2 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+                            Songs · {filteredSongs.length}
+                        </p>
+                        {filteredSongs.map((song) => (
+                            <div
+                                key={song.id}
+                                className={cn(
+                                    'group w-full flex items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors cursor-pointer',
+                                    activeSongId === song.id
+                                        ? 'bg-accent text-accent-foreground'
+                                        : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                                )}
+                                onClick={() => setActiveSongId(song.id)}
+                            >
+                                <FileText className="h-4 w-4 mt-0.5 shrink-0 opacity-60" />
+                                <div className="min-w-0 flex-1">
+                                    <p className="text-sm font-medium truncate">{song.title}</p>
+                                    <p className="text-[10px] text-muted-foreground">{formatTime(song.updatedAt)}</p>
+                                </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        if (confirm('Delete this song?')) deleteSong(song.id)
+                                    }}
+                                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-destructive cursor-pointer"
+                                >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        ))}
+                    </>
+                )}
             </nav>
         </aside>
     )
