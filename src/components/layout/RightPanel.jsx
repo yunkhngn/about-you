@@ -30,7 +30,12 @@ export function RightPanel({ className }) {
     const [tab, setTab] = useState('chords')
     const [selectedChord, setSelectedChord] = useState(null)
     const [transpose, setTranspose] = useState(0)
-    const { activeSong, updateSong } = useSongs()
+    const { activeSong, updateSong, isReadOnly } = useSongs()
+
+    // Reset transpose counter when switching songs
+    useEffect(() => {
+        setTranspose(0)
+    }, [activeSong?.id])
 
     // Parse content and extract chords
     const lines = useMemo(() => {
@@ -69,8 +74,10 @@ export function RightPanel({ className }) {
         setTranspose(newTranspose)
         if (activeSong?.content) {
             try {
-                const originalLines = JSON.parse(activeSong.content)
-                const transposed = transposeContent(originalLines, newTranspose)
+                const currentLines = JSON.parse(activeSong.content)
+                // We transpose by the delta (1 or -1) applied to the current chords,
+                // instead of cumulative newTranspose, since the content is already saved.
+                const transposed = transposeContent(currentLines, delta)
                 updateSong(activeSong.id, { content: JSON.stringify(transposed) })
             } catch { /* ignore */ }
         }
@@ -190,7 +197,8 @@ export function RightPanel({ className }) {
                                 <div className="flex items-center gap-3">
                                     <button
                                         onClick={() => handleTranspose(-1)}
-                                        className="h-8 w-8 rounded-md bg-muted hover:bg-accent text-sm font-medium transition-colors cursor-pointer"
+                                        disabled={isReadOnly}
+                                        className="h-8 w-8 rounded-md bg-muted hover:bg-accent text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         −
                                     </button>
@@ -199,7 +207,8 @@ export function RightPanel({ className }) {
                                     </span>
                                     <button
                                         onClick={() => handleTranspose(1)}
-                                        className="h-8 w-8 rounded-md bg-muted hover:bg-accent text-sm font-medium transition-colors cursor-pointer"
+                                        disabled={isReadOnly}
+                                        className="h-8 w-8 rounded-md bg-muted hover:bg-accent text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         +
                                     </button>
@@ -238,7 +247,8 @@ export function RightPanel({ className }) {
                                     type="number"
                                     value={activeSong?.tempo || 120}
                                     onChange={(e) => activeSong && updateSong(activeSong.id, { tempo: parseInt(e.target.value) || 120 })}
-                                    className="text-sm font-medium font-mono bg-transparent border-b border-input outline-none w-20 focus:border-primary"
+                                    disabled={isReadOnly}
+                                    className="text-sm font-medium font-mono bg-transparent border-b border-input outline-none w-20 focus:border-primary disabled:opacity-50"
                                 />
                                 <span className="text-sm text-muted-foreground ml-1">BPM</span>
                             </div>
@@ -250,7 +260,8 @@ export function RightPanel({ className }) {
                                     max="12"
                                     value={activeSong?.capo || 0}
                                     onChange={(e) => activeSong && updateSong(activeSong.id, { capo: parseInt(e.target.value) || 0 })}
-                                    className="text-sm font-medium font-mono bg-transparent border-b border-input outline-none w-16 focus:border-primary"
+                                    disabled={isReadOnly}
+                                    className="text-sm font-medium font-mono bg-transparent border-b border-input outline-none w-16 focus:border-primary disabled:opacity-50"
                                 />
                             </div>
                             <div>
@@ -258,7 +269,8 @@ export function RightPanel({ className }) {
                                 <select
                                     value={activeSong?.visibility || 'private'}
                                     onChange={(e) => activeSong && updateSong(activeSong.id, { visibility: e.target.value })}
-                                    className="text-sm font-medium bg-transparent border-b border-input outline-none cursor-pointer focus:border-primary"
+                                    disabled={isReadOnly}
+                                    className="text-sm font-medium bg-transparent border-b border-input outline-none cursor-pointer focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     <option value="private">Private</option>
                                     <option value="unlisted">Unlisted</option>

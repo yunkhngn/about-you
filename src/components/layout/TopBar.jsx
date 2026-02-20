@@ -6,6 +6,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { useSongs } from '@/components/SongsProvider'
 import { exportSongPDF } from '@/lib/export/pdf'
 import { ProfileDialog } from '@/components/auth/ProfileDialog'
+import { ShareDialog } from '@/components/share/ShareDialog'
 import { cn } from '@/lib/utils'
 
 const STATUS_MAP = {
@@ -17,9 +18,9 @@ const STATUS_MAP = {
 export function TopBar({ className }) {
     const { theme, toggleTheme } = useTheme()
     const { user, signOut } = useAuth()
-    const { activeSong, saveStatus } = useSongs()
+    const { activeSong, saveStatus, isReadOnly } = useSongs()
     const [exporting, setExporting] = useState(false)
-    const [copied, setCopied] = useState(false)
+    const [shareOpen, setShareOpen] = useState(false)
     const [profileOpen, setProfileOpen] = useState(false)
 
     const status = STATUS_MAP[saveStatus] || STATUS_MAP.saved
@@ -39,11 +40,7 @@ export function TopBar({ className }) {
 
     const handleShare = () => {
         if (!activeSong?.shareId) return
-        const url = `${window.location.origin}/s/${activeSong.shareId}`
-        navigator.clipboard.writeText(url).then(() => {
-            setCopied(true)
-            setTimeout(() => setCopied(false), 2000)
-        })
+        setShareOpen(true)
     }
 
     return (
@@ -54,12 +51,18 @@ export function TopBar({ className }) {
                     className
                 )}
             >
-                {/* Left: Save status */}
+                {/* Left: Save status / Read-only badge */}
                 <div className="flex items-center gap-3">
-                    <div className={cn('flex items-center gap-1.5', status.className)}>
-                        <StatusIcon className={cn('h-3.5 w-3.5', saveStatus === 'saving' && 'animate-spin')} />
-                        <span className="text-xs">{status.text}</span>
-                    </div>
+                    {activeSong && isReadOnly ? (
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md border border-border/50">
+                            Read-only
+                        </span>
+                    ) : (
+                        <div className={cn('flex items-center gap-1.5', status.className)}>
+                            <StatusIcon className={cn('h-3.5 w-3.5', saveStatus === 'saving' && 'animate-spin')} />
+                            <span className="text-xs">{status.text}</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Right: Actions */}
@@ -91,16 +94,18 @@ export function TopBar({ className }) {
                         {exporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
                         Export
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        className="gap-1.5 text-xs h-8"
-                        onClick={handleShare}
-                        disabled={!activeSong}
-                    >
-                        {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Share2 className="h-3.5 w-3.5" />}
-                        {copied ? 'Copied!' : 'Share'}
-                    </Button>
+                    {!isReadOnly && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="gap-1.5 text-xs h-8"
+                            onClick={handleShare}
+                            disabled={!activeSong}
+                        >
+                            <Share2 className="h-3.5 w-3.5" />
+                            Share
+                        </Button>
+                    )}
                     <div className="w-px h-5 bg-border mx-1" />
                     <Button
                         variant="ghost"
@@ -114,6 +119,7 @@ export function TopBar({ className }) {
             </header>
 
             <ProfileDialog open={profileOpen} onClose={() => setProfileOpen(false)} />
+            <ShareDialog open={shareOpen} onClose={() => setShareOpen(false)} />
         </>
     )
 }

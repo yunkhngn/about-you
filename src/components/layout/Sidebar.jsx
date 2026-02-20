@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { useSongs } from '@/components/SongsProvider'
+import { useAuth } from '@/components/AuthProvider'
 import { cn } from '@/lib/utils'
 
 export function Sidebar({ className }) {
     const { songs, activeSongId, setActiveSongId, createSong, deleteSong, loading } = useSongs()
+    const { user } = useAuth()
     const [search, setSearch] = useState('')
     const [deleteTarget, setDeleteTarget] = useState(null)
 
@@ -107,17 +109,24 @@ export function Sidebar({ className }) {
                                     <FileText className="h-4 w-4 mt-0.5 shrink-0 opacity-60" />
                                     <div className="min-w-0 flex-1">
                                         <p className="text-sm font-medium truncate">{song.title}</p>
-                                        <p className="text-[10px] text-muted-foreground">{formatTime(song.updatedAt)}</p>
+                                        <div className="flex items-center gap-1.5 mt-0.5">
+                                            {song.ownerId !== user?.uid && (
+                                                <span className="text-[9px] uppercase tracking-wider font-semibold text-primary bg-primary/10 px-1 rounded-sm">Shared</span>
+                                            )}
+                                            <p className="text-[10px] text-muted-foreground">{formatTime(song.updatedAt)}</p>
+                                        </div>
                                     </div>
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            setDeleteTarget(song.id)
-                                        }}
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-destructive cursor-pointer"
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
+                                    {song.ownerId === user?.uid && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                setDeleteTarget(song.id)
+                                            }}
+                                            className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-destructive cursor-pointer"
+                                        >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                        </button>
+                                    )}
                                 </div>
                             ))}
                         </>

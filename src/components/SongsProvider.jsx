@@ -27,7 +27,7 @@ export function SongsProvider({ children }) {
         let cancelled = false
         setTimeout(() => setLoading(true), 0)
 
-        getSongs(user.uid).then((data) => {
+        getSongs(user.uid, user.email).then((data) => {
             if (cancelled) return
             setSongs(data)
             if (data.length > 0) setActiveSongId(data[0].id)
@@ -73,6 +73,13 @@ export function SongsProvider({ children }) {
 
     // Update song locally + autosave with debounce
     const handleUpdate = useCallback((songId, data) => {
+        // Prevent update if we know it's read only for active song
+        if (activeSongId === songId && activeSong) {
+            const isOwner = activeSong.ownerId === user?.uid
+            const isEditor = activeSong.sharedRoles?.[user?.email?.toLowerCase()] === 'editor'
+            if (!isOwner && !isEditor) return
+        }
+
         // Optimistic local update
         setSongs((prev) =>
             prev.map((s) => (s.id === songId ? { ...s, ...data } : s))
@@ -92,6 +99,10 @@ export function SongsProvider({ children }) {
         }, 1000)
     }, [])
 
+    const isOwner = activeSong ? activeSong.ownerId === user?.uid : false
+    const isEditor = activeSong && user ? activeSong.sharedRoles?.[user.email?.toLowerCase()] === 'editor' : false
+    const isReadOnly = activeSong ? (!isOwner && !isEditor) : false
+
     const value = {
         songs,
         activeSong,
@@ -99,6 +110,8 @@ export function SongsProvider({ children }) {
         setActiveSongId,
         loading,
         saveStatus,
+        isReadOnly,
+        isOwner,
         createSong: handleCreate,
         updateSong: handleUpdate,
         deleteSong: handleDelete,

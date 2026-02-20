@@ -7,6 +7,7 @@ import { RightPanel } from '@/components/layout/RightPanel'
 import { TopBar } from '@/components/layout/TopBar'
 import AuthPage from '@/pages/AuthPage'
 import SharedSongPage from '@/pages/SharedSongPage'
+import NotFoundPage from '@/pages/NotFoundPage'
 import { Loader2 } from 'lucide-react'
 
 function ProtectedRoute({ children }) {
@@ -68,13 +69,14 @@ export default function App() {
         />
         <Route path="/s/:shareId" element={<SharedSongPage />} />
         <Route
-          path="/*"
+          path="/"
           element={
             <ProtectedRoute>
               <Workspace />
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>
   )

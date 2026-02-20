@@ -51,8 +51,24 @@ function ChordPopover({ position, initialValue = '', onSave, onClose }) {
 /**
  * Tooltip for previewing guitar/piano chords on hover
  */
-function ChordPreviewTooltip({ chord, position, onMouseEnter, onMouseLeave }) {
+function ChordPreviewTooltip({ chordName, position, onMouseEnter, onMouseLeave, onChordChange, isReadOnly }) {
     const [activeTab, setActiveTab] = useState('guitar')
+    const [editValue, setEditValue] = useState(chordName)
+
+    useEffect(() => {
+        setEditValue(chordName)
+    }, [chordName])
+
+    const handleSave = () => {
+        if (editValue.trim() !== chordName && editValue.trim() !== '') {
+            onChordChange(editValue.trim())
+        }
+    }
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') handleSave()
+        else if (e.key === 'Escape') setEditValue(chordName)
+    }
 
     return (
         <div
@@ -66,7 +82,18 @@ function ChordPreviewTooltip({ chord, position, onMouseEnter, onMouseLeave }) {
             onClick={(e) => e.stopPropagation()}
         >
             <div className="flex items-center justify-between mb-3 border-b pb-2">
-                <h4 className="font-mono font-bold text-lg text-primary">{chord}</h4>
+                {isReadOnly ? (
+                    <h4 className="font-mono font-bold text-lg text-primary select-none">{chordName}</h4>
+                ) : (
+                    <input
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={handleSave}
+                        onKeyDown={handleKeyDown}
+                        className="font-mono font-bold text-lg text-primary bg-transparent outline-none w-24 border-b border-transparent hover:border-primary/50 focus:border-primary transition-colors"
+                        title="Edit chord"
+                    />
+                )}
                 <div className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full uppercase tracking-widest">
                     Preview
                 </div>
@@ -79,12 +106,12 @@ function ChordPreviewTooltip({ chord, position, onMouseEnter, onMouseLeave }) {
                 </TabsList>
                 <TabsContent value="guitar" className="flex justify-center mt-0">
                     <div className="transform scale-90 origin-top">
-                        <GuitarVisualization chord={chord} />
+                        <GuitarVisualization chord={chordName} />
                     </div>
                 </TabsContent>
                 <TabsContent value="piano" className="flex justify-center mt-0">
                     <div className="transform scale-90 origin-top">
-                        <PianoVisualization chord={chord} />
+                        <PianoVisualization chord={chordName} />
                     </div>
                 </TabsContent>
             </Tabs>
@@ -165,7 +192,7 @@ const SECTION_THEMES = {
 /**
  * Renders a single line with chords above
  */
-function EditorLine({ line, chords = [], section, isSectionStart, isSectionEnd, isSelected, onLyricChange, onAddChord, onEditChord, lineIndex, onKeyDown, onPasteMultiLine, onLineClick }) {
+function EditorLine({ line, chords = [], section, isSectionStart, isSectionEnd, isSelected, isReadOnly, onLyricChange, onAddChord, onEditChord, lineIndex, onKeyDown, onPasteMultiLine, onLineClick }) {
     const lineRef = useRef(null)
     const contentRef = useRef(null)
     const [popover, setPopover] = useState(null)
@@ -195,6 +222,7 @@ function EditorLine({ line, chords = [], section, isSectionStart, isSectionEnd, 
     }
 
     const handleDoubleClick = (e) => {
+        if (isReadOnly) return
         if (e.target.closest('.chord-span')) return
         // Measure position relative to the content area, not the outer container
         const rect = contentRef.current.getBoundingClientRect()
@@ -262,9 +290,10 @@ function EditorLine({ line, chords = [], section, isSectionStart, isSectionEnd, 
                             }}
                             onDoubleClick={(e) => {
                                 e.stopPropagation()
+                                if (isReadOnly) return
                                 setPopover({ x: chord.position, y: 0, mode: 'edit', chordIndex: i, initialValue: chord.name })
                             }}
-                            title="Click to play, Double-click to edit"
+                            title={isReadOnly ? "Click to play" : "Click to play, Double-click to edit"}
                         >
                             {chord.name}
                         </span>
@@ -272,14 +301,20 @@ function EditorLine({ line, chords = [], section, isSectionStart, isSectionEnd, 
                 </div>
 
                 {/* Lyric line — uncontrolled */}
-                <EditableLine
-                    lineIndex={lineIndex}
-                    initialText={line}
-                    onTextChange={(text) => onLyricChange(lineIndex, text)}
-                    onDoubleClick={handleDoubleClick}
-                    onKeyDown={(e) => onKeyDown(e, lineIndex)}
-                    onPasteMultiLine={onPasteMultiLine}
-                />
+                {!isReadOnly ? (
+                    <EditableLine
+                        lineIndex={lineIndex}
+                        initialText={line}
+                        onTextChange={(text) => onLyricChange(lineIndex, text)}
+                        onDoubleClick={handleDoubleClick}
+                        onKeyDown={(e) => onKeyDown(e, lineIndex)}
+                        onPasteMultiLine={onPasteMultiLine}
+                    />
+                ) : (
+                    <div className="min-h-[1.75rem] text-foreground leading-relaxed whitespace-pre-wrap">
+                        {line}
+                    </div>
+                )}
 
                 {/* Chord insertion popover */}
                 {popover && (
@@ -294,19 +329,26 @@ function EditorLine({ line, chords = [], section, isSectionStart, isSectionEnd, 
                 {/* Chord preview popover (Guitar/Piano) */}
                 {previewPopover && !popover && (
                     <ChordPreviewTooltip
-                        chord={previewPopover.chord}
+                        chordName={previewPopover.chord}
                         position={{ x: previewPopover.x, y: previewPopover.y }}
+                        isReadOnly={isReadOnly}
                         onMouseEnter={() => {
                             if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current)
                         }}
                         onMouseLeave={handleMouseLeaveChord}
+                        onChordChange={(newName) => {
+                            onEditChord(lineIndex, previewPopover.index, newName)
+                            setPreviewPopover(prev => prev ? { ...prev, chord: newName } : null)
+                        }}
                     />
                 )}
 
                 {/* Hint on hover */}
-                <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-muted-foreground pointer-events-none">
-                    dbl-click space for chord
-                </div>
+                {!isReadOnly && (
+                    <div className="absolute right-0 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-muted-foreground pointer-events-none">
+                        dbl-click space for chord
+                    </div>
+                )}
             </div>
         </div>
     )
@@ -384,32 +426,41 @@ function SectionToolbar({ rangeInfo, onSelectSection, onClear }) {
 }
 
 export function SongEditor({ className }) {
-    const { activeSong, updateSong } = useSongs()
+    const { activeSong, updateSong, isReadOnly } = useSongs()
     const [lines, setLines] = useState([{ id: crypto.randomUUID(), lyrics: '', chords: [] }])
     const [title, setTitle] = useState('')
     const [sectionPopover, setSectionPopover] = useState(null)
     const [selectedLines, setSelectedLines] = useState(null) // { start, end } for line selection
     const prevSongId = useRef(null)
+    const prevContentRef = useRef(null)
     const editorContainerRef = useRef(null)
 
     // Sync to parent/DB helper
     const saveLines = useCallback((newLines) => {
         if (activeSong) {
-            updateSong(activeSong.id, { content: serializeContent(newLines) })
+            const newContent = serializeContent(newLines)
+            prevContentRef.current = newContent
+            updateSong(activeSong.id, { content: newContent })
         }
     }, [activeSong, updateSong])
 
-    // Load song content when active song changes
+    // Load song content when active song changes OR external changes (Transpose)
     useEffect(() => {
         if (activeSong && activeSong.id !== prevSongId.current) {
             prevSongId.current = activeSong.id
+            prevContentRef.current = activeSong.content
             setTimeout(() => {
                 setTitle(activeSong.title || 'Untitled Song')
                 setLines(parseContent(activeSong.content))
                 setSelectedLines(null)
             }, 0)
+        } else if (activeSong && activeSong.content !== prevContentRef.current) {
+            // Content changed externally (e.g. from Transpose in RightPanel)!
+            prevContentRef.current = activeSong.content
+            setLines(parseContent(activeSong.content))
         } else if (!activeSong) {
             prevSongId.current = null
+            prevContentRef.current = null
             setTimeout(() => {
                 setTitle('')
                 setLines([{ id: crypto.randomUUID(), lyrics: '', chords: [] }])
@@ -749,7 +800,6 @@ export function SongEditor({ className }) {
                     {lines.map((line, i) => {
                         const isSectionStart = line.section && (i === 0 || lines[i - 1].section !== line.section)
                         const isSectionEnd = line.section && (i === lines.length - 1 || lines[i + 1].section !== line.section)
-                        const isSelected = selectedLines !== null && i >= selectedLines.start && i <= selectedLines.end
                         return (
                             <EditorLine
                                 key={line.id}
@@ -758,14 +808,15 @@ export function SongEditor({ className }) {
                                 section={line.section}
                                 isSectionStart={isSectionStart}
                                 isSectionEnd={isSectionEnd}
-                                isSelected={isSelected}
-                                lineIndex={i}
+                                isReadOnly={isReadOnly}
+                                isSelected={selectedLines !== null && i >= selectedLines.start && i <= selectedLines.end}
+                                onLineClick={handleLineClick}
                                 onLyricChange={handleLyricChange}
                                 onAddChord={handleAddChord}
                                 onEditChord={handleEditChord}
+                                lineIndex={i}
                                 onKeyDown={handleKeyDown}
-                                onPasteMultiLine={(text) => handlePasteMultiLine(i, text)}
-                                onLineClick={handleLineClick}
+                                onPasteMultiLine={(text) => handlePasteMultiLine(text, i)}
                             />
                         )
                     })}

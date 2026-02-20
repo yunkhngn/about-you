@@ -29,6 +29,8 @@ export async function createSong(userId, data = {}) {
     tags: data.tags || [],
     visibility: data.visibility || 'private',
     shareId: data.shareId || generateShareId(),
+    sharedEmails: data.sharedEmails || [],
+    sharedRoles: data.sharedRoles || {},
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   }
@@ -38,19 +40,42 @@ export async function createSong(userId, data = {}) {
 }
 
 /**
- * Get all songs for a user
+ * Get all songs for a user (owned + shared with them)
  */
-export async function getSongs(userId) {
-  const q = query(
+export async function getSongs(userId, userEmail) {
+  // Query 1: Songs owned by user
+  const qOwned = query(
     collection(db, SONGS_COLLECTION),
-    where('ownerId', '==', userId),
-    orderBy('updatedAt', 'desc')
+    where('ownerId', '==', userId)
   )
-  const snapshot = await getDocs(q)
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }))
+
+  const promises = [getDocs(qOwned)]
+
+  // Query 2: Songs shared with user via email
+  if (userEmail) {
+    const qShared = query(
+      collection(db, SONGS_COLLECTION),
+      where('sharedEmails', 'array-contains', userEmail)
+    )
+    promises.push(getDocs(qShared))
+  }
+
+  const snapshots = await Promise.all(promises)
+  
+  // Merge and deduplicate by ID
+  const songsMap = new Map()
+  snapshots.forEach((snap) => {
+    snap.docs.forEach((doc) => {
+      songsMap.set(doc.id, { id: doc.id, ...doc.data() })
+    })
+  })
+
+  // Convert to array and sort by updatedAt desc
+  return Array.from(songsMap.values()).sort((a, b) => {
+    const timeA = a.updatedAt?.toMillis ? a.updatedAt.toMillis() : 0
+    const timeB = b.updatedAt?.toMillis ? b.updatedAt.toMillis() : 0
+    return timeB - timeA
+  })
 }
 
 /**
