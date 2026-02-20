@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { useAuth } from '@/components/AuthProvider'
 import { createSong, getSongs, updateSong, deleteSong } from '@/lib/db'
@@ -15,14 +16,16 @@ export function SongsProvider({ children }) {
     // Load songs on user change
     useEffect(() => {
         if (!user) {
-            setSongs([])
-            setActiveSongId(null)
-            setLoading(false)
+            setTimeout(() => {
+                setSongs([])
+                setActiveSongId(null)
+                setLoading(false)
+            }, 0)
             return
         }
 
         let cancelled = false
-        setLoading(true)
+        setTimeout(() => setLoading(true), 0)
 
         getSongs(user.uid).then((data) => {
             if (cancelled) return

@@ -78,6 +78,8 @@ export function ProfileDialog({ open, onClose }) {
         }
     }
 
+    const isGoogleUser = user?.providerData?.some(p => p.providerId === 'google.com')
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
             <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
@@ -111,7 +113,13 @@ export function ProfileDialog({ open, onClose }) {
                                         value={photoURL}
                                         onChange={(e) => setPhotoURL(e.target.value)}
                                         placeholder="https://example.com/avatar.jpg"
+                                        disabled={isGoogleUser}
                                     />
+                                    {isGoogleUser && (
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Avatar is managed by your Google account.
+                                        </p>
+                                    )}
                                 </div>
 
                                 {error && <p className="text-destructive text-sm">{error}</p>}
@@ -125,43 +133,54 @@ export function ProfileDialog({ open, onClose }) {
                         </TabsContent>
 
                         <TabsContent value="security">
-                            <form onSubmit={handleUpdatePassword} className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Current Password</label>
-                                    <Input
-                                        type="password"
-                                        value={currentPassword}
-                                        onChange={(e) => setCurrentPassword(e.target.value)}
-                                        required
-                                    />
+                            {isGoogleUser ? (
+                                <div className="text-center py-8 text-muted-foreground">
+                                    <p className="text-sm">
+                                        Your account is connected via Google.
+                                    </p>
+                                    <p className="text-xs mt-1">
+                                        Please manage your password and security settings through your Google Account.
+                                    </p>
                                 </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">New Password</label>
-                                    <Input
-                                        type="password"
-                                        value={newPassword}
-                                        onChange={(e) => setNewPassword(e.target.value)}
-                                        required
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Confirm New Password</label>
-                                    <Input
-                                        type="password"
-                                        value={confirmPassword}
-                                        onChange={(e) => setConfirmPassword(e.target.value)}
-                                        required
-                                    />
-                                </div>
+                            ) : (
+                                <form onSubmit={handleUpdatePassword} className="space-y-4">
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Current Password</label>
+                                        <Input
+                                            type="password"
+                                            value={currentPassword}
+                                            onChange={(e) => setCurrentPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">New Password</label>
+                                        <Input
+                                            type="password"
+                                            value={newPassword}
+                                            onChange={(e) => setNewPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label className="text-sm font-medium">Confirm New Password</label>
+                                        <Input
+                                            type="password"
+                                            value={confirmPassword}
+                                            onChange={(e) => setConfirmPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
 
-                                {error && <p className="text-destructive text-sm">{error}</p>}
-                                {success && <p className="text-green-500 text-sm">{success}</p>}
+                                    {error && <p className="text-destructive text-sm">{error}</p>}
+                                    {success && <p className="text-green-500 text-sm">{success}</p>}
 
-                                <div className="pt-2 flex justify-end gap-2">
-                                    <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-                                    <Button type="submit" variant="destructive" disabled={loading}>Update Password</Button>
-                                </div>
-                            </form>
+                                    <div className="pt-2 flex justify-end gap-2">
+                                        <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+                                        <Button type="submit" variant="destructive" disabled={loading}>Update Password</Button>
+                                    </div>
+                                </form>
+                            )}
                         </TabsContent>
                     </Tabs>
                 </div>

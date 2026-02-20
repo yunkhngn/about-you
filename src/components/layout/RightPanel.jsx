@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Music, Piano, Info } from 'lucide-react'
 import { PianoVisualization } from '@/components/instruments/PianoVisualization'
@@ -10,10 +10,21 @@ import {
     getScaleNotes,
     extractChords,
     transposeContent,
-    transposeChord,
 } from '@/lib/music/engine'
 import { playChordByName, playNote } from '@/lib/music/audio'
 import { cn } from '@/lib/utils'
+
+// Helper to parse song content
+function parseContent(content) {
+    if (!content) return [{ lyrics: '', chords: [] }]
+    try {
+        const parsed = JSON.parse(content)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+    } catch {
+        return content.split('\n').map((line) => ({ lyrics: line, chords: [] }))
+    }
+    return [{ lyrics: '', chords: [] }]
+}
 
 export function RightPanel({ className }) {
     const [tab, setTab] = useState('chords')
@@ -145,26 +156,32 @@ export function RightPanel({ className }) {
                             )}
 
                             {/* Song chords */}
-                            {chords.length > 0 && (
-                                <div>
-                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                        Used Chords
+                            {allChords.length > 0 && (
+                                <div className="mt-6 border-t border-border pt-6">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                                        Used in Song
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
-                                        {chords.map((chord) => (
-                                            <button
-                                                key={chord}
-                                                onClick={() => handleChordClick(chord)}
-                                                className={cn(
-                                                    'h-8 px-3 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer',
-                                                    selectedChord === chord
-                                                        ? 'bg-primary text-primary-foreground'
-                                                        : 'bg-muted hover:bg-chord-highlight text-foreground'
-                                                )}
-                                            >
-                                                {chord}
-                                            </button>
-                                        ))}
+                                        {allChords.length > 0 ? (
+                                            allChords.map((chord) => (
+                                                <button
+                                                    key={chord}
+                                                    onClick={() => handleChordClick(chord)}
+                                                    className={cn(
+                                                        'h-8 px-3 rounded text-xs font-mono transition-colors cursor-pointer',
+                                                        selectedChord === chord
+                                                            ? 'bg-primary text-primary-foreground font-semibold'
+                                                            : 'bg-muted hover:bg-chord-highlight text-foreground font-medium'
+                                                    )}
+                                                >
+                                                    {chord}
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground italic">
+                                                No chords found in song
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             )}

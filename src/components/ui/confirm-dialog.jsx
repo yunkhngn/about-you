@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 export function ConfirmDialog({ open, title, message, onConfirm, onCancel, variant = 'destructive' }) {
     const dialogRef = useRef(null)

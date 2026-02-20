@@ -1,5 +1,4 @@
 import { Chord, Note } from 'tonal'
-import { cn } from '@/lib/utils'
 
 // Common guitar chord voicings (standard tuning: E A D G B E)
 // -1 = muted, 0 = open, 1-12 = fret number
@@ -29,7 +28,7 @@ const CHORD_VOICINGS = {
 const STRING_LABELS = ['E', 'A', 'D', 'G', 'B', 'e']
 const FRET_COUNT = 5
 
-export function GuitarVisualization({ chord, onPlayNote }) {
+export function GuitarVisualization({ chord }) {
     const voicing = chord ? CHORD_VOICINGS[chord] : null
     const frets = voicing ? voicing[0] : null
     const startFret = voicing ? voicing[1] : 0

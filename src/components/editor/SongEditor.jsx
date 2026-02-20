@@ -194,20 +194,16 @@ export function SongEditor({ className }) {
     const { activeSong, updateSong } = useSongs()
     const [lines, setLines] = useState([{ lyrics: '', chords: [] }])
     const [title, setTitle] = useState('')
-    const prevSongId = useRef(null)
+    const [prevSongId, setPrevSongId] = useState(null)
 
-    // Load song content when active song changes
-    useEffect(() => {
-        if (activeSong && activeSong.id !== prevSongId.current) {
-            prevSongId.current = activeSong.id
-            setTitle(activeSong.title || 'Untitled Song')
-            setLines(parseContent(activeSong.content))
-        } else if (!activeSong) {
-            prevSongId.current = null
-            setTitle('')
-            setLines([{ lyrics: '', chords: [] }])
-        }
-    }, [activeSong?.id])
+    // Load song content when active song changes (derive state in render to avoid cascading effect)
+    const currentSongId = activeSong?.id || null
+    if (currentSongId !== prevSongId) {
+        setPrevSongId(currentSongId)
+        setTitle(activeSong?.title || 'Untitled Song')
+        setLines(activeSong ? parseContent(activeSong.content) : [{ lyrics: '', chords: [] }])
+    }
+
 
     // Sync to parent/DB helper
     const saveLines = useCallback((newLines) => {
@@ -362,7 +358,7 @@ export function SongEditor({ className }) {
         } else if (e.key === 'ArrowDown' && lineIndex < lines.length - 1) {
             // Optional: Handle arrow navigation
         }
-    }, [saveLines])
+    }, [saveLines, lines.length])
 
     if (!activeSong) {
         return (

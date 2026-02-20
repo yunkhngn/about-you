@@ -23,7 +23,6 @@ export function detectKey(chordNames) {
   let bestScore = 0
 
   for (const keyName of allKeys) {
-    const keyChords = Key.majorKey(keyName.split(' ')[0])
     const keyType = keyName.includes('minor') ? 'minor' : 'major'
 
     let chordList
