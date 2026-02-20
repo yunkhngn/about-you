@@ -83,7 +83,7 @@ export default function LandingPage() {
             {/* Footer */}
             <footer className="py-8 border-t border-border/40 mt-auto flex items-center justify-center">
                 <p className="text-sm text-muted-foreground">
-                    Made with <span className="text-red-500">❤️</span> by <a href="#" className="hover:text-primary transition-colors">Nguyen Dang Khoa</a>
+                    Created by <a href="https://github.com/yunkhngn" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">@yunkhngn</a> - a homeless musician
                 </p>
             </footer>
         </div>
