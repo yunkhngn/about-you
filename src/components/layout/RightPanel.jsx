@@ -94,10 +94,6 @@ export function RightPanel({ className }) {
                             <Music className="h-3.5 w-3.5 mr-1.5" />
                             Chords
                         </TabsTrigger>
-                        <TabsTrigger value="instruments">
-                            <Piano className="h-3.5 w-3.5 mr-1.5" />
-                            Instrument
-                        </TabsTrigger>
                         <TabsTrigger value="info">
                             <Info className="h-3.5 w-3.5 mr-1.5" />
                             Info
@@ -209,19 +205,18 @@ export function RightPanel({ className }) {
                                     </button>
                                 </div>
                             </div>
-                        </div>
-                    </TabsContent>
 
-                    <TabsContent value="instruments">
-                        <div className="pt-5 space-y-5">
-                            <PianoVisualization chord={selectedChord} onPlayNote={handlePlayNote} />
-                            <GuitarVisualization chord={selectedChord} onPlayNote={handlePlayNote} />
+                            {/* Instruments Visualizations */}
+                            <div className="pt-6 border-t border-border mt-6 space-y-5">
+                                <PianoVisualization chord={selectedChord} onPlayNote={handlePlayNote} />
+                                <GuitarVisualization chord={selectedChord} onPlayNote={handlePlayNote} />
 
-                            {!selectedChord && (
-                                <p className="text-xs text-muted-foreground text-center italic mt-2">
-                                    Click a chord in the Chords tab to visualize it
-                                </p>
-                            )}
+                                {!selectedChord && (
+                                    <p className="text-xs text-muted-foreground text-center italic mt-2">
+                                        Click a chord above to visualize it
+                                    </p>
+                                )}
+                            </div>
                         </div>
                     </TabsContent>
 
