@@ -1,10 +1,10 @@
-# About You — Songwriting Workspace 🎵
+# About You - Songwriting Workspace 🎵
 
 ![Dashboard Preview](./public/thumb.jpg)
 
 **About You** is a minimal, distraction-free songwriting platform designed specifically for musicians, lyricists, and composers. It provides an intuitive interface to draft lyrics, annotate chords, transpose keys on the fly, and visualize chord fingerings for both piano and guitar.
 
-## 🚀 Features
+## Features
 
 - **Smart Editor**: Write lyrics and chords seamlessly. The editor automatically detects and highlights valid music chords within your text.
 - **Real-time Transposition**: Effortlessly transpose your entire song up or down by half-steps with a single click.
@@ -18,7 +18,7 @@
 - **Theme Support**: Beautiful Light and Dark modes.
 - **Mobile Responsive**: Fully usable on mobile with off-canvas sidebar drawers and responsive chord viewers.
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: [React.js](https://reactjs.org/) + [Vite](https://vitejs.dev/)
 - **Routing**: [React Router DOM](https://reactrouter.com/)
@@ -28,7 +28,7 @@
 - **Backend/Database**: [Firebase](https://firebase.google.com/) (Firestore Base, Firebase Authentication)
 - **PDF Generation**: `jspdf` & `html2canvas` 
 
-## 📦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -69,17 +69,17 @@ Ensure you have [Node.js](https://nodejs.org/en/) and [Yarn](https://yarnpkg.com
 5. **Open app in your browser:**
    Navigate to `http://localhost:5173`.
 
-## 🔒 Authentication Flow
+## Authentication Flow
 The app requires an account to create and backup songs.
 - **Email/Password**: Requires mandatory Email Verification before accessing the dashboard to prevent ghost/bot accounts.
 - **Social Login**: Google One-Tap authentication is supported out of the box.
 
-## 🤝 Contributing
+## Contributing
 
 Contributions, issues, and feature requests are welcome!
 Feel free to check out the [issues page](https://github.com/yunkhngn/about-you/issues).
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License.
 
