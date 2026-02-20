@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
-import { Music, Piano, Info } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Music, Piano, Info, X } from 'lucide-react'
 import { PianoVisualization } from '@/components/instruments/PianoVisualization'
 import { GuitarVisualization } from '@/components/instruments/GuitarVisualization'
 import { useSongs } from '@/components/SongsProvider'
@@ -26,7 +27,7 @@ function parseContent(content) {
     return [{ lyrics: '', chords: [] }]
 }
 
-export function RightPanel({ className }) {
+export function RightPanel({ className, isOpen, onClose }) {
     const [tab, setTab] = useState('chords')
     const [selectedChord, setSelectedChord] = useState(null)
     const [transpose, setTranspose] = useState(0)
@@ -88,205 +89,223 @@ export function RightPanel({ className }) {
     }, [])
 
     return (
-        <aside
-            className={cn(
-                'w-96 border-l border-border bg-card flex flex-col h-full overflow-y-auto',
-                className
+        <>
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-200"
+                    onClick={onClose}
+                />
             )}
-        >
-            <div className="p-4">
-                <Tabs value={tab} onValueChange={setTab}>
-                    <TabsList>
-                        <TabsTrigger value="chords">
-                            <Music className="h-3.5 w-3.5 mr-1.5" />
-                            Chords
-                        </TabsTrigger>
-                        <TabsTrigger value="info">
-                            <Info className="h-3.5 w-3.5 mr-1.5" />
-                            Info
-                        </TabsTrigger>
-                    </TabsList>
 
-                    <TabsContent value="chords">
-                        <div className="pt-5 space-y-5">
-                            {/* Key indicator */}
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                    Detected Key
-                                </p>
-                                {detectedKey ? (
-                                    <div className="flex items-center gap-3">
-                                        <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-mono font-semibold text-lg">
-                                            {detectedKey.split(' ')[0]}
-                                        </span>
-                                        <div>
-                                            <p className="text-sm font-medium capitalize">{detectedKey}</p>
-                                            <p className="text-[10px] text-muted-foreground">
-                                                {scaleNotes.join(' · ')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-muted-foreground italic">
-                                        Add chords to detect key
-                                    </p>
-                                )}
-                            </div>
+            <aside
+                className={cn(
+                    'fixed inset-y-0 right-0 z-50 w-80 lg:w-96 border-l border-border bg-card flex flex-col h-full overflow-y-auto transform transition-transform duration-300 ease-in-out lg:relative lg:transform-none',
+                    isOpen ? 'translate-x-0 shadow-2xl lg:shadow-none' : 'translate-x-full lg:translate-x-0',
+                    className
+                )}
+            >
+                <div className="p-4">
+                    <div className="flex items-center justify-between mb-2 lg:hidden">
+                        <span className="text-sm font-medium">Tools</span>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onClose}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
 
-                            {/* Chords in key */}
-                            {keyChords.length > 0 && (
+                    <Tabs value={tab} onValueChange={setTab}>
+                        <TabsList className="w-full">
+                            <TabsTrigger value="chords" className="flex-1">
+                                <Music className="h-3.5 w-3.5 mr-1.5" />
+                                Chords
+                            </TabsTrigger>
+                            <TabsTrigger value="info" className="flex-1">
+                                <Info className="h-3.5 w-3.5 mr-1.5" />
+                                Info
+                            </TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="chords">
+                            <div className="pt-5 space-y-5">
+                                {/* Key indicator */}
                                 <div>
                                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                        Chords in Key
+                                        Detected Key
                                     </p>
-                                    <div className="grid grid-cols-4 gap-1.5">
-                                        {keyChords.map((chord) => (
-                                            <button
-                                                key={chord}
-                                                onClick={() => handleChordClick(chord)}
-                                                className={cn(
-                                                    'h-9 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer',
-                                                    selectedChord === chord
-                                                        ? 'bg-primary text-primary-foreground'
-                                                        : 'bg-muted hover:bg-chord-highlight text-foreground'
-                                                )}
-                                            >
-                                                {chord}
-                                            </button>
-                                        ))}
-                                    </div>
+                                    {detectedKey ? (
+                                        <div className="flex items-center gap-3">
+                                            <span className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary font-mono font-semibold text-lg">
+                                                {detectedKey.split(' ')[0]}
+                                            </span>
+                                            <div>
+                                                <p className="text-sm font-medium capitalize">{detectedKey}</p>
+                                                <p className="text-[10px] text-muted-foreground">
+                                                    {scaleNotes.join(' · ')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground italic">
+                                            Add chords to detect key
+                                        </p>
+                                    )}
                                 </div>
-                            )}
 
-                            {/* Song chords */}
-                            {allChords.length > 0 && (
-                                <div className="mt-6 border-t border-border pt-6">
-                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
-                                        Used in Song
-                                    </p>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {allChords.length > 0 ? (
-                                            allChords.map((chord) => (
+                                {/* Chords in key */}
+                                {keyChords.length > 0 && (
+                                    <div>
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                                            Chords in Key
+                                        </p>
+                                        <div className="grid grid-cols-4 gap-1.5">
+                                            {keyChords.map((chord) => (
                                                 <button
                                                     key={chord}
                                                     onClick={() => handleChordClick(chord)}
                                                     className={cn(
-                                                        'h-8 px-3 rounded text-xs font-mono transition-colors cursor-pointer',
+                                                        'h-9 rounded-md text-xs font-mono font-medium transition-colors cursor-pointer',
                                                         selectedChord === chord
-                                                            ? 'bg-primary text-primary-foreground font-semibold'
-                                                            : 'bg-muted hover:bg-chord-highlight text-foreground font-medium'
+                                                            ? 'bg-primary text-primary-foreground'
+                                                            : 'bg-muted hover:bg-chord-highlight text-foreground'
                                                     )}
                                                 >
                                                     {chord}
                                                 </button>
-                                            ))
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground italic">
-                                                No chords found in song
-                                            </p>
-                                        )}
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Song chords */}
+                                {allChords.length > 0 && (
+                                    <div className="mt-6 border-t border-border pt-6">
+                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                                            Used in Song
+                                        </p>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {allChords.length > 0 ? (
+                                                allChords.map((chord) => (
+                                                    <button
+                                                        key={chord}
+                                                        onClick={() => handleChordClick(chord)}
+                                                        className={cn(
+                                                            'h-8 px-3 rounded text-xs font-mono transition-colors cursor-pointer',
+                                                            selectedChord === chord
+                                                                ? 'bg-primary text-primary-foreground font-semibold'
+                                                                : 'bg-muted hover:bg-chord-highlight text-foreground font-medium'
+                                                        )}
+                                                    >
+                                                        {chord}
+                                                    </button>
+                                                ))
+                                            ) : (
+                                                <p className="text-sm text-muted-foreground italic">
+                                                    No chords found in song
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Transpose */}
+                                <div>
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                                        Transpose
+                                    </p>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => handleTranspose(-1)}
+                                            disabled={isReadOnly}
+                                            className="h-8 w-8 rounded-md bg-muted hover:bg-accent text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            −
+                                        </button>
+                                        <span className="text-sm font-mono font-medium w-8 text-center">
+                                            {transpose > 0 ? `+${transpose}` : transpose}
+                                        </span>
+                                        <button
+                                            onClick={() => handleTranspose(1)}
+                                            disabled={isReadOnly}
+                                            className="h-8 w-8 rounded-md bg-muted hover:bg-accent text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            +
+                                        </button>
                                     </div>
                                 </div>
-                            )}
 
-                            {/* Transpose */}
-                            <div>
-                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                                    Transpose
-                                </p>
-                                <div className="flex items-center gap-3">
-                                    <button
-                                        onClick={() => handleTranspose(-1)}
-                                        disabled={isReadOnly}
-                                        className="h-8 w-8 rounded-md bg-muted hover:bg-accent text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        −
-                                    </button>
-                                    <span className="text-sm font-mono font-medium w-8 text-center">
-                                        {transpose > 0 ? `+${transpose}` : transpose}
-                                    </span>
-                                    <button
-                                        onClick={() => handleTranspose(1)}
-                                        disabled={isReadOnly}
-                                        className="h-8 w-8 rounded-md bg-muted hover:bg-accent text-sm font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        +
-                                    </button>
+                                {/* Instruments Visualizations */}
+                                <div className="pt-6 border-t border-border mt-6 space-y-5">
+                                    <PianoVisualization chord={selectedChord} onPlayNote={handlePlayNote} />
+                                    <GuitarVisualization chord={selectedChord} onPlayNote={handlePlayNote} />
+
+                                    {!selectedChord && (
+                                        <p className="text-xs text-muted-foreground text-center italic mt-2">
+                                            Click a chord above to visualize it
+                                        </p>
+                                    )}
                                 </div>
                             </div>
+                        </TabsContent>
 
-                            {/* Instruments Visualizations */}
-                            <div className="pt-6 border-t border-border mt-6 space-y-5">
-                                <PianoVisualization chord={selectedChord} onPlayNote={handlePlayNote} />
-                                <GuitarVisualization chord={selectedChord} onPlayNote={handlePlayNote} />
-
-                                {!selectedChord && (
-                                    <p className="text-xs text-muted-foreground text-center italic mt-2">
-                                        Click a chord above to visualize it
+                        <TabsContent value="info">
+                            <div className="pt-5 space-y-4">
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Title</p>
+                                    <p className="text-sm font-medium">{activeSong?.title || 'No song selected'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Key</p>
+                                    <p className="text-sm font-medium font-mono capitalize">
+                                        {detectedKey || 'Unknown'}
                                     </p>
-                                )}
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Tempo</p>
+                                    <input
+                                        type="number"
+                                        value={activeSong?.tempo || 120}
+                                        onChange={(e) => activeSong && updateSong(activeSong.id, { tempo: parseInt(e.target.value) || 120 })}
+                                        disabled={isReadOnly}
+                                        className="text-sm font-medium font-mono bg-transparent border-b border-input outline-none w-20 focus:border-primary disabled:opacity-50"
+                                    />
+                                    <span className="text-sm text-muted-foreground ml-1">BPM</span>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Capo</p>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        max="12"
+                                        value={activeSong?.capo || 0}
+                                        onChange={(e) => activeSong && updateSong(activeSong.id, { capo: parseInt(e.target.value) || 0 })}
+                                        disabled={isReadOnly}
+                                        className="text-sm font-medium font-mono bg-transparent border-b border-input outline-none w-16 focus:border-primary disabled:opacity-50"
+                                    />
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Visibility</p>
+                                    <select
+                                        value={activeSong?.visibility || 'private'}
+                                        onChange={(e) => activeSong && updateSong(activeSong.id, { visibility: e.target.value })}
+                                        disabled={isReadOnly}
+                                        className="text-sm font-medium bg-transparent border-b border-input outline-none cursor-pointer focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <option value="private">Private</option>
+                                        <option value="unlisted">Unlisted</option>
+                                        <option value="public">Public</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Share ID</p>
+                                    <p className="text-sm font-mono text-muted-foreground">
+                                        {activeSong?.shareId || '—'}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    </TabsContent>
-
-                    <TabsContent value="info">
-                        <div className="pt-5 space-y-4">
-                            <div>
-                                <p className="text-xs text-muted-foreground">Title</p>
-                                <p className="text-sm font-medium">{activeSong?.title || 'No song selected'}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Key</p>
-                                <p className="text-sm font-medium font-mono capitalize">
-                                    {detectedKey || 'Unknown'}
-                                </p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Tempo</p>
-                                <input
-                                    type="number"
-                                    value={activeSong?.tempo || 120}
-                                    onChange={(e) => activeSong && updateSong(activeSong.id, { tempo: parseInt(e.target.value) || 120 })}
-                                    disabled={isReadOnly}
-                                    className="text-sm font-medium font-mono bg-transparent border-b border-input outline-none w-20 focus:border-primary disabled:opacity-50"
-                                />
-                                <span className="text-sm text-muted-foreground ml-1">BPM</span>
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Capo</p>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    max="12"
-                                    value={activeSong?.capo || 0}
-                                    onChange={(e) => activeSong && updateSong(activeSong.id, { capo: parseInt(e.target.value) || 0 })}
-                                    disabled={isReadOnly}
-                                    className="text-sm font-medium font-mono bg-transparent border-b border-input outline-none w-16 focus:border-primary disabled:opacity-50"
-                                />
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Visibility</p>
-                                <select
-                                    value={activeSong?.visibility || 'private'}
-                                    onChange={(e) => activeSong && updateSong(activeSong.id, { visibility: e.target.value })}
-                                    disabled={isReadOnly}
-                                    className="text-sm font-medium bg-transparent border-b border-input outline-none cursor-pointer focus:border-primary disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <option value="private">Private</option>
-                                    <option value="unlisted">Unlisted</option>
-                                    <option value="public">Public</option>
-                                </select>
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground">Share ID</p>
-                                <p className="text-sm font-mono text-muted-foreground">
-                                    {activeSong?.shareId || '—'}
-                                </p>
-                            </div>
-                        </div>
-                    </TabsContent>
-                </Tabs>
-            </div>
-        </aside>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </aside>
+        </>
     )
 }

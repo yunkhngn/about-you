@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Save, Download, Share2, Moon, Sun, LogOut, Loader2, Check, User } from 'lucide-react'
+import { Save, Download, Share2, Moon, Sun, LogOut, Loader2, Check, User, Menu, PanelRightOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/components/ThemeProvider'
 import { useAuth } from '@/components/AuthProvider'
@@ -15,7 +15,7 @@ const STATUS_MAP = {
     unsaved: { icon: Save, text: 'Unsaved', className: 'text-yellow-500' },
 }
 
-export function TopBar({ className }) {
+export function TopBar({ className, toggleLeft, toggleRight }) {
     const { theme, toggleTheme } = useTheme()
     const { user, signOut } = useAuth()
     const { activeSong, saveStatus, isReadOnly } = useSongs()
@@ -53,6 +53,10 @@ export function TopBar({ className }) {
             >
                 {/* Left: Save status / Read-only badge */}
                 <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" className="md:hidden h-8 w-8" onClick={toggleLeft}>
+                        <Menu className="h-4 w-4" />
+                    </Button>
+
                     {activeSong && isReadOnly ? (
                         <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-md border border-border/50">
                             Read-only
@@ -111,9 +115,12 @@ export function TopBar({ className }) {
                         variant="ghost"
                         size="icon"
                         onClick={signOut}
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive hidden sm:flex"
                     >
                         <LogOut className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="lg:hidden h-8 w-8 ml-1" onClick={toggleRight}>
+                        <PanelRightOpen className="h-4 w-4" />
                     </Button>
                 </div>
             </header>

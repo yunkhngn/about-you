@@ -3,7 +3,7 @@ import { useAuth } from '@/components/AuthProvider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Music2, Loader2, Chrome } from 'lucide-react'
-import { sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
+import { sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, updateProfile, sendEmailVerification, signOut as firebaseSignOut } from 'firebase/auth'
 import { auth } from '@/lib/firebase'
 
 export default function AuthPage() {
@@ -12,6 +12,8 @@ export default function AuthPage() {
     const [isReset, setIsReset] = useState(false)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
+    const [displayName, setDisplayName] = useState('')
     const [error, setError] = useState('')
     const [message, setMessage] = useState('')
     const [loading, setLoading] = useState(false)
@@ -27,9 +29,27 @@ export default function AuthPage() {
                 await sendPasswordResetEmail(auth, email)
                 setMessage('Password reset email sent. Check your inbox.')
             } else if (isSignUp) {
-                await signUp(email, password)
+                if (password !== confirmPassword) {
+                    setError('Passwords do not match')
+                    setLoading(false)
+                    return
+                }
+                const userCredential = await signUp(email, password)
+                await updateProfile(userCredential.user, { displayName })
+                await sendEmailVerification(userCredential.user)
+                await firebaseSignOut(auth) // force sign out after signup so they must verify
+                setIsSignUp(false)
+                setMessage('Account created! Please verify your email before signing in.')
+                setPassword('')
+                setConfirmPassword('')
+                setDisplayName('')
             } else {
-                await signIn(email, password)
+                const userCredential = await signIn(email, password)
+                if (!userCredential.user.emailVerified) {
+                    await firebaseSignOut(auth)
+                    setError('Please verify your email before logging in.')
+                    return
+                }
             }
         } catch (err) {
             const messages = {
@@ -78,6 +98,17 @@ export default function AuthPage() {
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-3">
+                        {isSignUp && (
+                            <Input
+                                type="text"
+                                placeholder="Account Name"
+                                value={displayName}
+                                onChange={(e) => setDisplayName(e.target.value)}
+                                required
+                                autoComplete="name"
+                                className="h-11"
+                            />
+                        )}
                         <Input
                             type="email"
                             placeholder="Email"
@@ -109,6 +140,18 @@ export default function AuthPage() {
                                     </button>
                                 )}
                             </div>
+                        )}
+                        {isSignUp && !isReset && (
+                            <Input
+                                type="password"
+                                placeholder="Confirm Password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                required
+                                autoComplete="new-password"
+                                minLength={6}
+                                className="h-11"
+                            />
                         )}
                     </div>
 
@@ -164,7 +207,7 @@ export default function AuthPage() {
                             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                             <button
                                 type="button"
-                                onClick={() => { setIsSignUp(!isSignUp); setError(''); setIsReset(false) }}
+                                onClick={() => { setIsSignUp(!isSignUp); setError(''); setMessage(''); setIsReset(false) }}
                                 className="text-primary hover:underline font-medium cursor-pointer"
                             >
                                 {isSignUp ? 'Sign in' : 'Create one'}

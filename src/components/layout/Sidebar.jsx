@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, Plus, Music2, FileText, Trash2 } from 'lucide-react'
+import { X, Search, Plus, Music2, FileText, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
@@ -7,7 +7,7 @@ import { useSongs } from '@/components/SongsProvider'
 import { useAuth } from '@/components/AuthProvider'
 import { cn } from '@/lib/utils'
 
-export function Sidebar({ className }) {
+export function Sidebar({ className, isOpen, onClose }) {
     const { songs, activeSongId, setActiveSongId, createSong, deleteSong, loading } = useSongs()
     const { user } = useAuth()
     const [search, setSearch] = useState('')
@@ -42,23 +42,37 @@ export function Sidebar({ className }) {
 
     return (
         <>
+            {/* Mobile Overlay */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 md:hidden animate-in fade-in duration-200"
+                    onClick={onClose}
+                />
+            )}
+
             <aside
                 className={cn(
-                    'flex flex-col h-full w-64 border-r border-border bg-card',
+                    'fixed inset-y-0 left-0 z-50 flex flex-col h-full w-72 md:w-64 border-r border-border bg-card transform transition-transform duration-300 ease-in-out md:relative md:transform-none',
+                    isOpen ? 'translate-x-0 shadow-2xl md:shadow-none' : '-translate-x-full md:translate-x-0',
                     className
                 )}
             >
-                {/* Logo */}
-                <div className="px-5 py-6 border-b border-border">
-                    <div className="flex items-center gap-2.5">
-                        <Music2 className="h-5 w-5 text-primary" />
-                        <h1 className="text-lg font-display font-semibold tracking-tight">
-                            About You
-                        </h1>
+                {/* Logo and Mobile Close */}
+                <div className="px-5 py-6 border-b border-border flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2.5">
+                            <Music2 className="h-5 w-5 text-primary" />
+                            <h1 className="text-lg font-display font-semibold tracking-tight">
+                                About You
+                            </h1>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Songwriting workspace
+                        </p>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                        Songwriting workspace
-                    </p>
+                    <Button variant="ghost" size="icon" className="md:hidden h-8 w-8" onClick={onClose}>
+                        <X className="h-4 w-4" />
+                    </Button>
                 </div>
 
                 {/* New Song + Search */}
@@ -104,7 +118,10 @@ export function Sidebar({ className }) {
                                             ? 'bg-accent text-accent-foreground'
                                             : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                                     )}
-                                    onClick={() => setActiveSongId(song.id)}
+                                    onClick={() => {
+                                        setActiveSongId(song.id)
+                                        if (window.innerWidth < 768) onClose()
+                                    }}
                                 >
                                     <FileText className="h-4 w-4 mt-0.5 shrink-0 opacity-60" />
                                     <div className="min-w-0 flex-1">

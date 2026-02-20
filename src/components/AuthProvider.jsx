@@ -10,7 +10,13 @@ export function AuthProvider({ children }) {
 
     useEffect(() => {
         const unsubscribe = onAuthChange((user) => {
-            setUser(user)
+            // Only set the user in context if they have verified their email
+            // (or if it's null when signed out)
+            if (user && !user.emailVerified) {
+                setUser(null)
+            } else {
+                setUser(user)
+            }
             setLoading(false)
         })
         return unsubscribe
