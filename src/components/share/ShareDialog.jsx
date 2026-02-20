@@ -45,7 +45,7 @@ export function ShareDialog({ open, onClose }) {
     if (!activeSong) return null
 
     const handleCopy = () => {
-        const url = `${window.location.origin}/s/${activeSong.shareId}`
+        const url = `${window.location.origin}/s/${activeSong.id}`
         navigator.clipboard.writeText(url).then(() => {
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)

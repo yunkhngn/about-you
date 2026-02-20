@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { getSongByShareId } from '@/lib/db'
+import { getSong } from '@/lib/db'
 import { Music2, Loader2, Lock, ArrowLeft } from 'lucide-react'
 import { detectKey, extractChords } from '@/lib/music/engine'
 import { Button } from '@/components/ui/button'
@@ -14,17 +14,18 @@ export default function SharedSongPage() {
     useEffect(() => {
         if (!shareId) return
 
-        getSongByShareId(shareId)
+        getSong(shareId)
             .then((data) => {
                 if (!data) {
                     setError('Song not found')
-                } else if (data.visibility === 'private') {
-                    setError('This song is private')
                 } else {
                     setSong(data)
                 }
             })
-            .catch(() => setError('Failed to load song'))
+            .catch((err) => {
+                console.error("Error loading shared song:", err)
+                setError('Failed to load song')
+            })
             .finally(() => setLoading(false))
     }, [shareId])
 

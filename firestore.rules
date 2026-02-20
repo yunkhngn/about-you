@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /songs/{songId} {
+      // Allow read if:
+      // 1. User is the owner
+      // 2. User's email is specifically added to sharedEmails
+      // 3. The song's visibility is 'public' or 'unlisted'
+      allow read: if (request.auth != null && request.auth.uid == resource.data.ownerId) ||
+                     (request.auth != null && request.auth.token.email in resource.data.sharedEmails) ||
+                     (resource.data.visibility == 'public' || resource.data.visibility == 'unlisted');
+
+      // Allow update if:
+      // 1. User is the owner
+      // 2. User's email is explicitly set to 'editor' in the sharedRoles map
+      allow update: if (request.auth != null && request.auth.uid == resource.data.ownerId) ||
+                       (request.auth != null && request.auth.token.email != null && resource.data.sharedRoles[request.auth.token.email] == 'editor');
+      
+      // Allow create and delete only for the owner
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.ownerId;
+      allow delete: if request.auth != null && request.auth.uid == resource.data.ownerId;
+    }
+  }
+}
